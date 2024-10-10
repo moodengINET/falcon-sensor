@@ -34,20 +34,33 @@ dpkg -i /tmp/${ZABBIX_DEB}
 
 # Update apt after installing the new repository
 echo "Updating apt after installing Zabbix repository..."
-apt update -y
 
 # Install Zabbix-agent
 echo "Installing MySQL Server..."
 apt install -y zabbix-agent
 
 #edit Zabbix Agent .conf
-#perl -pi -e 's/hello/hi/g' example.txt 
+#perl -pi -e 's/hello/hi/g' example.txt  ###Template
+
 #edit Hostname
-perl -pi -e 's/Hostname=Zabbix server/Hostname=XXXXX/g' /*/*/zabbix_agentd.conf
+perl -pi -e "s/Hostname=Zabbix server/Hostname=XXXXX/g" /*/*/zabbix_agentd.conf
+
 #edit Serveractive
-perl -pi -e 's/ServerActive=127.0.0.1/ServerActive=1/g' zabbix_agentd.conf
-#edit Serveractive
-perl -pi -e 's/# Timeout=3/Timeout=30/g' zabbix_agentd.conf
+perl -pi -e "s/# Timeout=3/Timeout=30/g" /*/*/zabbix_agentd.conf
+
+read -p "Is the system VMware or AHV? " system_type
+sleep 3
+
+# ตรวจสอบคำตอบและแก้ไขค่า ServerActive ใน zabbix_agentd.conf ตามคำตอบ
+if [[ "$system_type" == "AHV" ]]; then
+    perl -pi -e "s/ServerActive=127.0.0.1/ServerActive=203.154.185.152/g" /*/*/zabbix_agentd.conf
+    echo "ServerActive changed to 203.154.185.152 for AHV."
+elif [[ "$system_type" == "VMware" ]]; then
+    perl -pi -e "s/ServerActive=127.0.0.1/ServerActive=203.154.185.69/g" /*/*/zabbix_agentd.conf
+    echo "ServerActive changed to 203.154.185.69 for VMware."
+else
+    echo "Unknown system type. No changes made."
+fi
 
 sleep 10 
 # Start and enable Zabbix Proxy service
