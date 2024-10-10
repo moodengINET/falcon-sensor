@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Check if the script is run as root
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run this script as root using sudo."
+  exit 1
+fi
+
+# Update the system and install traceroute
+echo "Updating the system and installing traceroute..."
+apt update -y
+apt install -y traceroute
+
+# Stop the UFW service
+echo "Stopping the UFW service..."
+systemctl stop ufw
+
+# Download Zabbix Repository for Ubuntu 22.04
+ZABBIX_DEB="zabbix-release_7.0-2+ubuntu22.04_all.deb"
+ZABBIX_URL="https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/${ZABBIX_DEB}"
+
+echo "Downloading Zabbix repository from ${ZABBIX_URL}..."
+wget -O /tmp/${ZABBIX_DEB} ${ZABBIX_URL}
+
+# Check if the download was successful
+if [ $? -ne 0 ]; then
+  echo "Failed to download Zabbix repository!"
+  exit 1
+fi
+
+# Install Zabbix Repository
+echo "Installing Zabbix repository..."
+dpkg -i /tmp/${ZABBIX_DEB}
+
+# Update apt after installing the new repository
+echo "Updating apt after installing Zabbix repository..."
+apt update -y
+
+# Install Zabbix-agent
+echo "Installing MySQL Server..."
+apt install -y zabbix-agent
+
+#edit Zabbix Agent .conf
+#perl -pi -e 's/hello/hi/g' example.txt 
+#edit Hostname
+perl -pi -e 's/Hostname=Zabbix server/Hostname=XXXXX/g' /*/*/zabbix_agentd.conf
+#edit Serveractive
+perl -pi -e 's/ServerActive=127.0.0.1/ServerActive=1/g' zabbix_agentd.conf
+#edit Serveractive
+perl -pi -e 's/# Timeout=3/Timeout=30/g' zabbix_agentd.conf
+
+sleep 10 
+# Start and enable Zabbix Proxy service
+echo "Starting and enabling Zabbix Proxy service..."
+systemctl restart zabbix-agent
+systemctl enable zabbix-agent
