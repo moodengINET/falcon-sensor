@@ -69,9 +69,20 @@ esac
 
 # Modify zabbix_agentd.conf
 
-# Update the Hostname
-perl -pi -e "s/Hostname=Zabbix server/# Hostname=Zabbix server/g" /*/*/zabbix_agentd.conf
-perl -pi -e "s/# Hostname=/Hostname=XXXXX/g" /*/*/zabbix_agentd.conf
+# Check if the string exists and replace if found, otherwise insert it
+if grep -q "Hostname=Zabbix server" /*/*/zabbix_agentd.conf; then
+  perl -pi -e "s/Hostname=Zabbix server/# confighostname/g" /*/*/zabbix_agentd.conf
+else
+  echo "# confighostname" >> /*/*/zabbix_agentd.conf
+  echo "Hostname=XXXXX" >> /*/*/zabbix_agentd.conf
+fi
+
+# Check if Hostname line exists, if not, insert it
+if ! grep -q "^Hostname=" /*/*/zabbix_agentd.conf; then
+  echo "Hostname=XXXXX" >> /*/*/zabbix_agentd.conf
+else
+  perl -pi -e "s/# Hostname=/Hostname=XXXXX/g" /*/*/zabbix_agentd.conf
+fi
 
 # Edit Timeout setting
 perl -pi -e "s/# Timeout=3/Timeout=30/g" /*/*/zabbix_agentd.conf
