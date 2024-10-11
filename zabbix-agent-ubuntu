@@ -70,7 +70,8 @@ esac
 # Modify zabbix_agentd.conf
 
 # Update the Hostname
-perl -pi -e "s/Hostname=Zabbix server/Hostname=XXXXX/g" /*/*/zabbix_agentd.conf
+perl -pi -e "s/Hostname=Zabbix server/# Hostname=Zabbix server/g" /*/*/zabbix_agentd.conf
+perl -pi -e "s/# Hostname=/Hostname=XXXXX/g" /*/*/zabbix_agentd.conf
 
 # Edit Timeout setting
 perl -pi -e "s/# Timeout=3/Timeout=30/g" /*/*/zabbix_agentd.conf
