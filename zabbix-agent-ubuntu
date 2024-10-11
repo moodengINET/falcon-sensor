@@ -2,56 +2,84 @@
 
 # Check if the script is run as root
 if [ "$EUID" -ne 0 ]; then
-  echo "Please run this script as root using sudo."
+  echo "Please run as root"
+  exit
+fi
+
+# Check for OS type
+if [ -f /etc/os-release ]; then
+  . /etc/os-release
+  OS=$ID
+  VERSION=$VERSION_ID
+else
+  echo "Cannot determine the operating system."
   exit 1
 fi
 
-# Update the system and install traceroute
-echo "Updating the system and installing traceroute..."
-apt update -y
-apt install -y traceroute
+# Function to install Zabbix Agent on Ubuntu
+install_zabbix_ubuntu() {
+  echo "Detected OS: Ubuntu $VERSION"
+  echo "Installing Zabbix Agent on Ubuntu..."
 
-# Stop the UFW service
-echo "Stopping the UFW service..."
-systemctl stop ufw
+  # Add Zabbix repository
+  wget https://repo.zabbix.com/zabbix/6.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.0-2+ubuntu$(lsb_release -rs)_all.deb
+  dpkg -i zabbix-release_6.0-2+ubuntu$(lsb_release -rs)_all.deb
 
-# Download Zabbix Repository for Ubuntu 22.04
-ZABBIX_DEB="zabbix-release_7.0-2+ubuntu22.04_all.deb"
-ZABBIX_URL="https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/${ZABBIX_DEB}"
+  # Install Zabbix agent
+  apt install -y zabbix-agent
+  systemctl enable zabbix-agent
+  systemctl start zabbix-agent
+}
 
-echo "Downloading Zabbix repository from ${ZABBIX_URL}..."
-wget -O /tmp/${ZABBIX_DEB} ${ZABBIX_URL}
+# Function to install Zabbix Agent on CentOS/RHEL
+install_zabbix_centos() {
+  echo "Detected OS: CentOS/RHEL $VERSION"
+  echo "Installing Zabbix Agent on CentOS..."
 
-# Check if the download was successful
-if [ $? -ne 0 ]; then
-  echo "Failed to download Zabbix repository!"
-  exit 1
-fi
+  # Add Zabbix repository
+  rpm -Uvh https://repo.zabbix.com/zabbix/6.0/rhel/$(rpm -E %{rhel})/x86_64/zabbix-release-6.0-2.el$(rpm -E %{rhel}).noarch.rpm
 
-# Install Zabbix Repository
-echo "Installing Zabbix repository..."
-dpkg -i /tmp/${ZABBIX_DEB}
+  # Install Zabbix agent
+  yum install -y zabbix-agent
+  systemctl enable zabbix-agent
+  systemctl start zabbix-agent
+}
 
-# Update apt after installing the new repository
-echo "Updating apt after installing Zabbix repository..."
+# Function to install Zabbix Agent on other supported distros
+install_zabbix_other() {
+  echo "Detected OS: $OS $VERSION"
+  echo "Installing Zabbix Agent for other distributions..."
 
-# Install Zabbix-agent
-echo "Installing MySQL Server..."
-apt install -y zabbix-agent
+  # Here, you can add more logic for other distros if needed
+}
 
-#edit Zabbix Agent .conf
-#perl -pi -e 's/hello/hi/g' example.txt  ###Template
+# Main logic to check OS and call the appropriate function
+case "$OS" in
+  ubuntu)
+    install_zabbix_ubuntu
+    ;;
+  centos | rhel)
+    install_zabbix_centos
+    ;;
+  *)
+    echo "Unsupported OS: $OS $VERSION. Attempting installation for other distributions."
+    install_zabbix_other
+    ;;
+esac
 
-#edit Hostname
+# Modify zabbix_agentd.conf
+
+# Update the Hostname
 perl -pi -e "s/Hostname=Zabbix server/Hostname=XXXXX/g" /*/*/zabbix_agentd.conf
 
-#edit Serveractive
+# Edit Timeout setting
 perl -pi -e "s/# Timeout=3/Timeout=30/g" /*/*/zabbix_agentd.conf
 
+# Ask for system type and modify ServerActive setting based on user input
 read -p "Is the system VMware or AHV? " system_type
 sleep 3
 
-# ตรวจสอบคำตอบและแก้ไขค่า ServerActive ใน zabbix_agentd.conf ตามคำตอบ
+# Check user input and update ServerActive setting in zabbix_agentd.conf
 if [[ "$system_type" == "AHV" ]]; then
     perl -pi -e "s/ServerActive=127.0.0.1/ServerActive=203.154.185.152/g" /*/*/zabbix_agentd.conf
     echo "ServerActive changed to 203.154.185.152 for AHV."
@@ -61,9 +89,3 @@ elif [[ "$system_type" == "VMware" ]]; then
 else
     echo "Unknown system type. No changes made."
 fi
-
-sleep 10 
-# Start and enable Zabbix Proxy service
-echo "Starting and enabling Zabbix Proxy service..."
-systemctl restart zabbix-agent
-systemctl enable zabbix-agent
