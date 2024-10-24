@@ -27,7 +27,7 @@ if [[ "$OS_ID" == "ubuntu" ]]; then
 
   # 1. ดาวน์โหลดไฟล์ติดตั้ง Falcon Sensor จากลิงก์ที่กำหนด
   echo "กำลังดาวน์โหลด Falcon Sensor สำหรับ Ubuntu..."
-  wget -q https://203.150.48.120/owncloud/index.php/s/zOHuOuSa3EdsOxb
+ curl -k -o falcon-sensor_7.17.0-17005_amd64.deb https://203.150.48.120/owncloud/index.php/s/zOHuOuSa3EdsOxb
   if [ $? -ne 0 ]; then
     echo "การดาวน์โหลดไฟล์ติดตั้งล้มเหลว" >&2
     exit 1
@@ -58,13 +58,13 @@ elif [[ "$OS_ID" == "centos" || "$OS_ID" == "rhel" ]]; then
 
   # ตรวจสอบเวอร์ชัน CentOS เพื่อเลือกไฟล์ที่ถูกต้อง
   if [[ "$OS_VERSION" == "6" ]]; then
-    FALCON_SENSOR_URL="https://203.150.48.120/owncloud/index.php/s/uRaOh0AefYWRgNt"
+    FALCON_SENSOR_URL="falcon-sensor-7.17.0-17005.el6.x86_64.rpm https://203.150.48.120/owncloud/index.php/s/uRaOh0AefYWRgNt"
   elif [[ "$OS_VERSION" == "7" ]]; then
-    FALCON_SENSOR_URL="https://203.150.48.120/owncloud/index.php/s/ydQU8Hjt2OGlY0r"
+    FALCON_SENSOR_URL="falcon-sensor-7.18.0-17129.el7.x86_64.rpm https://203.150.48.120/owncloud/index.php/s/ydQU8Hjt2OGlY0r"
   elif [[ "$OS_VERSION" == "8" ]]; then
-    FALCON_SENSOR_URL="https://203.150.48.120/owncloud/index.php/s/vRKJDTHh1tPksZh"
+    FALCON_SENSOR_URL="falcon-sensor-7.18.0-17129.el8.x86_64.rpm https://203.150.48.120/owncloud/index.php/s/vRKJDTHh1tPksZh"
   elif [[ "$OS_VERSION" == "9" ]]; then
-    FALCON_SENSOR_URL="https://203.150.48.120/owncloud/index.php/s/olhwarRd7MDyPLs"
+    FALCON_SENSOR_URL="falcon-sensor-7.15.0-16803.el9.x86_64.rpm https://203.150.48.120/owncloud/index.php/s/olhwarRd7MDyPLs"
   else
     echo "ระบบปฏิบัติการนี้ไม่ได้รับการรองรับ" >&2
     exit 1
@@ -72,7 +72,7 @@ elif [[ "$OS_ID" == "centos" || "$OS_ID" == "rhel" ]]; then
 
   # ดาวน์โหลดไฟล์ติดตั้ง Falcon Sensor ตามเวอร์ชันของ CentOS
   echo "กำลังดาวน์โหลด Falcon Sensor สำหรับ CentOS $OS_VERSION..."
-  wget -q $FALCON_SENSOR_URL
+ curl -k -o $FALCON_SENSOR_URL
   if [ $? -ne 0 ]; then
     echo "การดาวน์โหลดไฟล์ติดตั้งล้มเหลว" >&2
     exit 1
@@ -103,7 +103,7 @@ elif [[ "$OS_ID" == "almalinux" ]]; then
 
   # ดาวน์โหลดไฟล์ติดตั้ง Falcon Sensor สำหรับ AlmaLinux
   echo "กำลังดาวน์โหลด Falcon Sensor สำหรับ AlmaLinux..."
-  wget -q https://203.150.48.120/owncloud/index.php/s/FQhU7UeVKE9OlWn
+ curl -k -o falcon-sensor-7.06.0-16108.el9.x86_64.rpm https://203.150.48.120/owncloud/index.php/s/FQhU7UeVKE9OlWn
   if [ $? -ne 0 ]; then
     echo "การดาวน์โหลดไฟล์ติดตั้งล้มเหลว" >&2
     exit 1
