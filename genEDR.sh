@@ -6,15 +6,23 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
-# ตรวจสอบระบบปฏิบัติการ
-OS=$(uname -s)
-OS_ID=$(lsb_release -is)  # จะได้ Ubuntu, CentOS, AlmaLinux, etc.
-OS_VERSION=$(lsb_release -rs)
+# ตรวจสอบระบบปฏิบัติการจากไฟล์ /etc/os-release
+if [ -f /etc/os-release ]; then
+  . /etc/os-release
+  OS_ID=$ID        # ระบบปฏิบัติการ (ubuntu, centos, almalinux, etc.)
+  OS_VERSION=$VERSION_ID  # เวอร์ชันของ OS
+elif [ -f /etc/centos-release ]; then
+  OS_ID="centos"
+  OS_VERSION=$(rpm -q --queryformat '%{VERSION}' centos-release)
+else
+  echo "ไม่สามารถตรวจสอบระบบปฏิบัติการได้" >&2
+  exit 1
+fi
 
 echo "ตรวจพบระบบปฏิบัติการ: $OS_ID $OS_VERSION"
 
 # เงื่อนไขสำหรับ Ubuntu
-if [[ "$OS_ID" == "Ubuntu" ]]; then
+if [[ "$OS_ID" == "ubuntu" ]]; then
   echo "ระบบปฏิบัติการเป็น Ubuntu"
 
   # 1. ดาวน์โหลดไฟล์ติดตั้ง Falcon Sensor จากลิงก์ที่กำหนด
@@ -30,7 +38,6 @@ if [[ "$OS_ID" == "Ubuntu" ]]; then
   ls
 
   # เปลี่ยนสิทธิ์ของไฟล์ติดตั้งเป็น 777
-
   chmod 777 falcon-sensor_7.16.0-16903_amd64.deb
 
   # แสดงรายการไฟล์อีกครั้งหลังเปลี่ยนสิทธิ์
@@ -46,7 +53,7 @@ if [[ "$OS_ID" == "Ubuntu" ]]; then
   fi
 
 # เงื่อนไขสำหรับ CentOS และ RedHat
-elif [[ "$OS_ID" == "CentOS" || "$OS_ID" == "RedHatEnterpriseServer" ]]; then
+elif [[ "$OS_ID" == "centos" || "$OS_ID" == "rhel" ]]; then
   echo "ระบบปฏิบัติการเป็น CentOS/RedHat"
 
   # ตรวจสอบเวอร์ชัน CentOS เพื่อเลือกไฟล์ที่ถูกต้อง
@@ -91,7 +98,7 @@ elif [[ "$OS_ID" == "CentOS" || "$OS_ID" == "RedHatEnterpriseServer" ]]; then
   fi
 
 # เงื่อนไขสำหรับ AlmaLinux
-elif [[ "$OS_ID" == "AlmaLinux" ]]; then
+elif [[ "$OS_ID" == "almalinux" ]]; then
   echo "ระบบปฏิบัติการเป็น AlmaLinux"
 
   # ดาวน์โหลดไฟล์ติดตั้ง Falcon Sensor สำหรับ AlmaLinux
